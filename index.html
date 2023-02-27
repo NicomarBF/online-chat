@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>anonymous chat</title>
+    <style>
+        body {
+            margin: 0;
+            padding-bottom: 3rem;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        #form {
+            background: rgba(0, 0, 0, 0.15);
+            padding: 0.25rem;
+            position: fixed;
+            width: 70%;
+            bottom: 0;
+            right: 0;
+            display: flex;
+            height: 3rem;
+            box-sizing: border-box;
+            backdrop-filter: blur(10px);
+            grid-area: form;
+        }
+
+        #input {
+            border: none;
+            padding: 0 1rem;
+            flex-grow: 1;
+            border-radius: 2rem;
+            margin: 0.25rem;
+        }
+
+        #input:focus {
+            outline: none;
+        }
+
+        #form>button {
+            background: #333;
+            border: none;
+            padding: 0 1rem;
+            margin: 0.25rem;
+            border-radius: 3px;
+            outline: none;
+            color: #fff;
+        }
+
+        #messages {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #messages>li {
+            padding: 0.5rem 1rem;
+        }
+
+        #messages>li:nth-child(odd) {
+            background: #efefef;
+        }
+
+        #user-list {
+            grid-area: user-list;
+            border-right: solid #cfcece 1px;
+        }
+
+        #chat {
+            grid-area: chat;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 30% 70%;
+            grid-template-areas:
+                "user-list chat"
+                "user-list chat"
+                "user-list form"
+            ;
+        }
+
+        #users {
+            padding: 15px;
+        }
+
+        th {
+            width: 100%;
+        }
+
+        .usarname {
+            font-size: 20px;
+        }
+
+        .typing {
+            font-size: 10px;
+            margin-left: 10px;
+        }
+
+        td:hover {
+            background-color: #cfcece;
+        }
+
+        .not-tipyng {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content">
+        <div id="user-list">
+            <table id="users">
+                <tr>
+                    <th>Usuários no chat</th>
+                </tr>
+            </table>
+        </div>
+        <div id="chat">
+            <ul id="messages"></ul>
+        </div>
+        <form id="form" action="">
+            <input id="input" autocomplete="off" /><button>Send</button>
+        </form>
+    </div>
+</body>
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.3/jquery.min.js"
+    integrity="sha512-STof4xm1wgkfm7heWqFJVn58Hm3EtS31XFaagaa8VMReCXAkQnJZ+jEy8PCC/iT18dFy95WcExNHFTqLyp72eQ=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+    var socket = io();
+    var username = prompt("Informe seu username para o chat")
+
+    socket.emit('connection report', username);
+
+    var messages = document.getElementById('messages');
+    var form = document.getElementById('form');
+    var input = document.getElementById('input');
+
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (input.value) {
+            socket.emit('chat message', input.value);
+            input.value = '';
+        }
+    });
+
+    socket.on('chat message', function (msg) {
+        var item = document.createElement('li');
+        item.textContent = msg;
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+    });
+
+    socket.on('user list', function (users) {
+        var $userList = $("#users")
+        let html = `
+            <tr>
+                <th>Usuários no chat</th>
+            </tr>
+        `
+        users.forEach(function (user) {
+            if (user.typing) {
+                html += `
+                <tr>
+                    <td class="username">${user.username}<span class="typing">Digitando...</span></td>
+                </tr>
+                `
+                $userList.append(html)
+            } else {
+                html += `
+                <tr>
+                    <td class="username">${user.username}</td>
+                </tr>
+                `
+            }
+        })
+        $userList.html(html);
+    });
+
+    $('#input').keyup(function () {
+        clearTimeout(this.interval);
+        this.interval = setTimeout(typing, 200);
+    });
+
+    function typing() {
+        if (input.value.length > 0) {
+            socket.emit('typing report');
+        } else {
+            socket.emit('not typing report');
+        }
+    }
+</script>
+
+</html>
