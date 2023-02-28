@@ -49,7 +49,7 @@ io.on('connection', (socket) => {
         const user = users.find(user => user.id === socket.id);
         io.emit('chat message', `${user.username} se desconectou no chat`);
         users = users.filter(user => user.id !== socket.id);
-        console.log(`${user.username} disconnected`)
+        io.emit('user list', users);
     });
 });
 

@@ -63,6 +63,8 @@
         #user-list {
             grid-area: user-list;
             border-right: solid #cfcece 1px;
+            position: fixed;
+            width: 30%;
         }
 
         #chat {
@@ -129,7 +131,7 @@
     crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
     var socket = io();
-    var username = prompt("Informe seu username para o chat")
+    var username = prompt("Informe seu username para o chat");
 
     socket.emit('connection report', username);
 
